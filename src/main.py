@@ -1,6 +1,6 @@
 import logging
 
-from src.TCPServer import TCPServer
+from src.http_server import HTTPServer
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s"
@@ -8,5 +8,5 @@ logging.basicConfig(
 
 
 if __name__ == "__main__":
-    server = TCPServer()
+    server = HTTPServer()
     server.start()
