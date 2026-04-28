@@ -1,10 +1,10 @@
+import logging
 import socket
 from typing import override
 
-from src.http_parser import parse_request
-from src.http_request import HTTPRequest
+from src.http.http_parser import parse_request
+from src.http.http_request import HTTPRequest
 from src.tcp_server import TCPServer
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 import logging
 
-from src.http_server import HTTPServer
+from src.http.http_server import HTTPServer
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s"

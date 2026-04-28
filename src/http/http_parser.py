@@ -1,4 +1,4 @@
-from src.http_request import HTTPRequest
+from src.http.http_request import HTTPRequest
 
 
 def parse_request(data: bytes) -> HTTPRequest:
