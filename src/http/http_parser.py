@@ -7,6 +7,8 @@ def parse_request(data: bytes) -> HTTPRequest:
     method, path, version = lines[0].split()
     headers: dict[str, str] = {}
     for line in lines[1:]:
+        if line == "":
+            break
         header, content = line.split(":", 1)
         headers[header] = content.strip()
     return HTTPRequest(method, path, version, headers)

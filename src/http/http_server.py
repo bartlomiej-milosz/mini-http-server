@@ -2,8 +2,8 @@ import logging
 import socket
 from typing import override
 
-from http_response_builder import build_response
-from http_response import HTTPResponse
+from src.http.http_response_builder import build_response
+from src.http.http_response import HTTPResponse
 from src.http.http_parser import parse_request
 from src.http.http_request import HTTPRequest
 from src.tcp_server import TCPServer
@@ -25,7 +25,7 @@ class HTTPServer(TCPServer):
 
     @override
     def _handle_client(
-            self, client_socket: socket.socket, address: tuple[str, int]
+        self, client_socket: socket.socket, address: tuple[str, int]
     ) -> None:
         data: bytes = self._receive(client_socket)
         request: HTTPRequest = parse_request(data)
