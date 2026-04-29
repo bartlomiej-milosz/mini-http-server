@@ -20,6 +20,19 @@ def server() -> TCPServer:
 
 
 @pytest.fixture
+def started_server(
+    server, mock_server_socket, mock_client_socket, client_address, mocker
+):
+    server.server_socket = mock_server_socket
+    mocker.patch.object(server, "_handle_client")
+    mock_server_socket.accept.side_effect = [
+        (mock_client_socket, client_address),
+        KeyboardInterrupt(),
+    ]
+    return server
+
+
+@pytest.fixture
 def mock_client_socket(mocker: MockerFixture) -> MagicMock:
     return mocker.MagicMock(spec=socket.socket)
 
@@ -32,6 +45,11 @@ def mock_server_socket(mocker: MockerFixture) -> MagicMock:
 @pytest.fixture
 def client_address() -> tuple[str, int]:
     return "127.0.0.1", 54321
+
+
+@pytest.fixture
+def server_address() -> tuple[str, int]:
+    return "127.0.0.1", 8080
 
 
 @pytest.mark.parametrize(
@@ -93,3 +111,57 @@ def test_handle_client_closes_socket_after_unicode_decode_error(
         "Failed to decode data from %s:%s", *client_address
     )
     mock_client_socket.close.assert_called_once()
+
+
+def test_server_binds_correct_address(
+    server: TCPServer,
+    mock_server_socket: MagicMock,
+    server_address: tuple[str, int],
+    mocker: MockerFixture,
+):
+    server.server_socket = mock_server_socket
+    mock_server_socket.accept.side_effect = KeyboardInterrupt()
+    server.start()
+    mock_server_socket.bind.assert_called_once_with(server_address)
+
+
+def test_server_listens_with_correct_backlog(
+    server: TCPServer, mock_server_socket: MagicMock, mocker: MockerFixture
+):
+    server.server_socket = mock_server_socket
+    mock_server_socket.accept.side_effect = KeyboardInterrupt()
+    server.start()
+    mock_server_socket.listen.assert_called_once_with(TCPServer.BACKLOG)
+
+
+def test_server_logs_listening_address(
+    server: TCPServer,
+    mock_server_socket: MagicMock,
+    server_address: tuple[str, int],
+    mocker: MockerFixture,
+):
+    server.server_socket = mock_server_socket
+    mock_logger = mocker.patch("src.tcp_server.logger")
+    mock_server_socket.accept.side_effect = KeyboardInterrupt()
+    server.start()
+    mock_logger.info.assert_any_call(
+        "The server is listening on: %s:%s", *server_address
+    )
+
+
+def test_server_accepts_client_socket_and_address(
+    started_server: TCPServer,
+    client_address: tuple[str, int],
+    mocker: MockerFixture,
+):
+    mock_logger: MagicMock = mocker.patch("src.tcp_server.logger")
+    started_server.start()
+    mock_logger.info.assert_any_call("New connection from %s:%s", *client_address)
+
+
+def test_server_closes_socket_after_keyboard_interrupt(
+    started_server: TCPServer,
+    mock_server_socket: MagicMock,
+):
+    started_server.start()
+    mock_server_socket.close.assert_called_once()
