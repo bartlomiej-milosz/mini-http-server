@@ -1,5 +1,6 @@
 import logging
 import socket
+from logging import Logger
 from typing import override
 
 from src.http.http_response_builder import build_response
@@ -8,7 +9,7 @@ from src.http.http_parser import parse_request
 from src.http.http_request import HTTPRequest
 from src.tcp_server import TCPServer
 
-logger = logging.getLogger(__name__)
+logger: Logger = logging.getLogger(__name__)
 
 
 class HTTPServer(TCPServer):
@@ -24,7 +25,7 @@ class HTTPServer(TCPServer):
         return data
 
     @override
-    def _handle_client(
+    def _process_request(
         self, client_socket: socket.socket, address: tuple[str, int]
     ) -> None:
         data: bytes = self._receive(client_socket)

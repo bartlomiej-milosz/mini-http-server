@@ -1,11 +1,13 @@
 import logging
 import socket
+from abc import ABC, abstractmethod
+from logging import Logger
 from typing import Final
 
-logger = logging.getLogger(__name__)
+logger: Logger = logging.getLogger(__name__)
 
 
-class TCPServer:
+class TCPServer(ABC):
     BACKLOG: Final = 5
     BUFFER_SIZE: Final = 1024
 
@@ -24,12 +26,16 @@ class TCPServer:
             data += chunk
         return data
 
+    @abstractmethod
+    def _process_request(
+        self, client_socket: socket.socket, address: tuple[str, int]
+    ) -> None: ...
+
     def _handle_client(
         self, client_socket: socket.socket, address: tuple[str, int]
     ) -> None:
         try:
-            data: bytes = self._receive(client_socket)
-            logger.info("Received %d bytes from %s:%s", len(data), *address)
+            self._process_request(client_socket, address)
         except ConnectionResetError:
             logger.warning("Client %s:%s disconnected unexpectedly", *address)
         except UnicodeDecodeError:
