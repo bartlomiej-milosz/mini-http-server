@@ -1,7 +1,7 @@
 [project]
-name = "tcp-server"
+name = "mini-http-server"
 version = "0.1.0"
-description = "TCP server implementation"
+description = "HTTP server implementation"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []

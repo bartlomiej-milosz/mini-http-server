@@ -1,7 +1,7 @@
 import socket
-from logging import Logger
 from typing import override
 from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
 

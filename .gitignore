@@ -12,3 +12,13 @@ wheels/
 # Coverage
 .coverage
 htmlcov/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+
+# IDEs
+.idea/
+
+# macOS
+.DS_Store
