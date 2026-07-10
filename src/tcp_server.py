@@ -17,14 +17,8 @@ class TCPServer(ABC):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    def _receive(self, client_socket: socket.socket) -> bytes:
-        data: bytes = b""
-        while True:
-            chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
-            if not chunk:
-                break
-            data += chunk
-        return data
+    @abstractmethod
+    def _receive(self, client_socket: socket.socket) -> bytes: ...
 
     @abstractmethod
     def _process_request(

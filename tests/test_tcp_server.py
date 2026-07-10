@@ -12,6 +12,16 @@ from src.tcp_server import TCPServer
 def server() -> TCPServer:
     class ConcreteTCPServer(TCPServer):
         @override
+        def _receive(self, client_socket: socket.socket) -> bytes:
+            data: bytes = b""
+            while True:
+                chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
+                if not chunk:
+                    break
+                data += chunk
+            return data
+
+        @override
         def _process_request(
             self, client_socket: socket.socket, address: tuple[str, int]
         ) -> None: ...
