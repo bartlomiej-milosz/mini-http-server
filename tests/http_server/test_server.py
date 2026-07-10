@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from src.tcp_server import TCPServer
+from http_server.server import TCPServer
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ def test_handle_client_closes_socket_after_connection_reset_error(
     mocker: MockerFixture,
 ):
     mocker.patch.object(server, "_process_request", side_effect=ConnectionResetError())
-    mock_logger: MagicMock = mocker.patch("src.tcp_server.logger")
+    mock_logger: MagicMock = mocker.patch("http_server.server.logger")
     server._handle_client(mock_client_socket, client_address)
     mock_logger.warning.assert_called_once_with(
         "Client %s:%s disconnected unexpectedly", *client_address
@@ -115,7 +115,7 @@ def test_handle_client_closes_socket_after_unicode_decode_error(
         "_process_request",
         side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid byte"),
     )
-    mock_logger: MagicMock = mocker.patch("src.tcp_server.logger")
+    mock_logger: MagicMock = mocker.patch("http_server.server.logger")
     server._handle_client(mock_client_socket, client_address)
     mock_logger.error.assert_called_once_with(
         "Failed to decode data from %s:%s", *client_address
@@ -151,7 +151,7 @@ def test_server_logs_listening_address(
     mocker: MockerFixture,
 ):
     server.server_socket = mock_server_socket
-    mock_logger = mocker.patch("src.tcp_server.logger")
+    mock_logger = mocker.patch("http_server.server.logger")
     mock_server_socket.accept.side_effect = KeyboardInterrupt()
     server.start()
     mock_logger.info.assert_any_call(
@@ -164,7 +164,7 @@ def test_server_accepts_client_socket_and_address(
     client_address: tuple[str, int],
     mocker: MockerFixture,
 ):
-    mock_logger: MagicMock = mocker.patch("src.tcp_server.logger")
+    mock_logger: MagicMock = mocker.patch("http_server.server.logger")
     started_server.start()
     mock_logger.info.assert_any_call("New connection from %s:%s", *client_address)
 

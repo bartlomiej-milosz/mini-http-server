@@ -10,15 +10,11 @@ The server is split into two layers:
 - **`HTTPServer`** — concrete subclass that overrides request receiving (stops at `\r\n\r\n`) and request processing (parse → respond).
 
 ```
-src/
-├── main.py                        # Entry point
-├── tcp_server.py                  # Abstract TCP server
-└── http/
-    ├── http_server.py             # HTTP server (extends TCPServer)
-    ├── http_parser.py             # Parses raw bytes into HTTPRequest
-    ├── http_request.py            # HTTPRequest dataclass
-    ├── http_response.py           # HTTPResponse dataclass
-    └── http_response_builder.py   # Serializes HTTPResponse to bytes
+http_server/
+├── main.py            # Entry point
+├── server.py          # TCPServer and HTTPServer
+├── models.py          # HTTPRequest and HTTPResponse dataclasses
+└── protocol.py        # HTTP parsing and building logic
 ```
 
 ## Requirements
@@ -35,7 +31,7 @@ uv sync
 ## Running
 
 ```sh
-uv run python -m src.main
+uv run python -m http_server.main
 ```
 
 The server starts on `127.0.0.1:8080` by default. Every incoming request receives a `200 OK` response with the body `Hello from server!`.
@@ -53,7 +49,7 @@ uv run pytest
 With coverage:
 
 ```sh
-uv run pytest --cov=src
+uv run pytest --cov=http_server
 ```
 
 ## Linting & type checking
