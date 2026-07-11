@@ -69,16 +69,52 @@ class HTTPServer(TCPServer):
     ):
         self.routes[(method, path)] = handler
 
+    def _read_until_headers_complete(self, client_socket: socket.socket) -> bytes:
+        data: bytes = b""
+        while b"\r\n\r\n" not in data:
+            chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
+            if not chunk:
+                break
+            data += chunk
+        return data
+
+    def _extract_content_length(self, headers_raw: bytes) -> int:
+        headers_text: str = headers_raw.decode("utf-8", errors="ignore")
+        for line in headers_text.split("\r\n")[1:]:
+            if ":" in line:
+                key, val = line.split(":", 1)
+                if key.strip().lower() == "content-length":
+                    try:
+                        return int(val.strip())
+                    except ValueError:
+                        return 0
+        return 0
+
+    def _read_body_by_content_length(
+        self, client_socket: socket.socket, body_raw: bytes, content_length: int
+    ) -> bytes:
+        while len(body_raw) < content_length:
+            chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
+            if not chunk:
+                break
+            body_raw += chunk
+        return body_raw
+
     @override
     def _receive(self, client_socket: socket.socket) -> bytes:
-        data: bytes = b""
-        while True:
-            chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
-            data += chunk
-            # HTTP header termination
-            if b"\r\n\r\n" in data:
-                break
-        return data
+        data: bytes = self._read_until_headers_complete(client_socket)
+
+        if b"\r\n\r\n" not in data:
+            return data
+
+        headers_raw, initial_body_raw = data.split(b"\r\n\r\n", 1)
+        content_length: int = self._extract_content_length(headers_raw)
+
+        full_body_raw: bytes = self._read_body_by_content_length(
+            client_socket, initial_body_raw, content_length
+        )
+
+        return headers_raw + b"\r\n\r\n" + full_body_raw
 
     def _send_response(
         self, client_socket: socket.socket, response: HTTPResponse

@@ -204,6 +204,22 @@ class TestHTTPServer:
         assert result == expected_bytes
         assert mock_client_socket.recv.call_count == 3
 
+    def test_receive_fetches_full_body_based_on_content_length(
+        self, get_http_server: HTTPServer, mock_client_socket: MagicMock
+    ):
+        http_server: HTTPServer = get_http_server
+        mock_client_socket.recv.side_effect = [
+            b"POST /api HTTP/1.1\r\n",
+            b"Content-Length: 10\r\n\r\n",
+            b"1234",
+            b"5678",
+            b"90"
+        ]
+        result: bytes = http_server._receive(mock_client_socket)
+        expected_bytes: bytes = b"POST /api HTTP/1.1\r\nContent-Length: 10\r\n\r\n1234567890"
+        assert result == expected_bytes
+        assert mock_client_socket.recv.call_count == 5
+
     def test_add_route_adds_handler_to_routes_dict(self, get_http_server: HTTPServer):
         def dummy_handler(request: HTTPRequest) -> HTTPResponse:
             return HTTPResponse(200, "OK")
