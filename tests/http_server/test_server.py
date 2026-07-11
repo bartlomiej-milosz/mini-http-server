@@ -213,10 +213,12 @@ class TestHTTPServer:
             b"Content-Length: 10\r\n\r\n",
             b"1234",
             b"5678",
-            b"90"
+            b"90",
         ]
         result: bytes = http_server._receive(mock_client_socket)
-        expected_bytes: bytes = b"POST /api HTTP/1.1\r\nContent-Length: 10\r\n\r\n1234567890"
+        expected_bytes: bytes = (
+            b"POST /api HTTP/1.1\r\nContent-Length: 10\r\n\r\n1234567890"
+        )
         assert result == expected_bytes
         assert mock_client_socket.recv.call_count == 5
 

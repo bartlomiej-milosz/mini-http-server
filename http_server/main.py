@@ -17,7 +17,7 @@ def api_status(request: HTTPRequest) -> HTTPResponse:
     )
 
 def api_users(request: HTTPRequest) -> HTTPResponse:
-    data = {"users": ["bartek", "admin", "guest"]}
+    data = {"users": ["kate", "admin", "guest"]}
     return HTTPResponse(
         status_code=200, 
         status_text="OK", 
@@ -26,7 +26,6 @@ def api_users(request: HTTPRequest) -> HTTPResponse:
     )
 
 def api_echo(request: HTTPRequest) -> HTTPResponse:
-    # Zwracamy to samo, co dostaliśmy w body zapytania
     return HTTPResponse(
         status_code=200, 
         status_text="OK", 

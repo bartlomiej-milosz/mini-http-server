@@ -14,7 +14,7 @@ from http_server.protocol import build_response, parse_request
             "",
         ),
         (
-            b"POST /api HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\nContent-Length: 15\r\n\r\n{\"key\":\"value\"}",
+            b'POST /api HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\nContent-Length: 15\r\n\r\n{"key":"value"}',
             "POST",
             "/api",
             {"Host": "example.com", "Accept": "*/*", "Content-Length": "15"},
@@ -52,10 +52,10 @@ def test_parse_request_returns_valid_request_object(
             HTTPResponse(
                 status_code=200,
                 status_text="OK",
-                body='{"user": "bartek"}',
+                body='{"user": "kate"}',
                 headers={"Content-Type": "application/json"},
             ),
-            b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 18\r\n\r\n{"user": "bartek"}',
+            b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 18\r\n\r\n{"user": "kate"}',
         ),
     ],
 )
