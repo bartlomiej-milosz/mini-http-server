@@ -1,7 +1,7 @@
 [project]
-name = "mini-http-server"
+name = "raw-network-stack"
 version = "0.1.0"
-description = "HTTP server implementation"
+description = "Raw TCP Network Stack including HTTP Server, Reverse Proxy, and Load Balancer"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
@@ -16,4 +16,4 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]

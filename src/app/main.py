@@ -1,37 +1,41 @@
 import logging
 import json
-from http_server.server import HTTPServer
-from http_server.models import HTTPRequest, HTTPResponse
+from app.http.server import HTTPServer
+from app.http.models import HTTPRequest, HTTPResponse
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
+
 def api_status(request: HTTPRequest) -> HTTPResponse:
     data = {"status": "ok", "version": "1.0", "message": "Backend API is running"}
     return HTTPResponse(
-        status_code=200, 
-        status_text="OK", 
-        body=json.dumps(data), 
-        headers={"Content-Type": "application/json"}
+        status_code=200,
+        status_text="OK",
+        body=json.dumps(data),
+        headers={"Content-Type": "application/json"},
     )
+
 
 def api_users(request: HTTPRequest) -> HTTPResponse:
     data = {"users": ["kate", "admin", "guest"]}
     return HTTPResponse(
-        status_code=200, 
-        status_text="OK", 
-        body=json.dumps(data), 
-        headers={"Content-Type": "application/json"}
+        status_code=200,
+        status_text="OK",
+        body=json.dumps(data),
+        headers={"Content-Type": "application/json"},
     )
+
 
 def api_echo(request: HTTPRequest) -> HTTPResponse:
     return HTTPResponse(
-        status_code=200, 
-        status_text="OK", 
-        body=request.body, 
-        headers={"Content-Type": request.headers.get("Content-Type", "text/plain")}
+        status_code=200,
+        status_text="OK",
+        body=request.body,
+        headers={"Content-Type": request.headers.get("Content-Type", "text/plain")},
     )
+
 
 if __name__ == "__main__":
     server = HTTPServer(port=8080)

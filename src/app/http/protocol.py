@@ -1,11 +1,11 @@
-from http_server.models import HTTPRequest, HTTPResponse
+from app.http.models import HTTPRequest, HTTPResponse
 
 
 def parse_request(data: bytes) -> HTTPRequest:
     parts = data.split(b"\r\n\r\n", 1)
     header_data = parts[0]
     body_data = parts[1] if len(parts) > 1 else b""
-    
+
     text: str = header_data.decode("utf-8")
     lines: list[str] = text.split("\r\n")
     method, path, version = lines[0].split()

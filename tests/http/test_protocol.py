@@ -1,6 +1,6 @@
 import pytest
-from http_server.models import HTTPRequest, HTTPResponse
-from http_server.protocol import build_response, parse_request
+from app.http.models import HTTPRequest, HTTPResponse
+from app.http.protocol import build_response, parse_request
 
 
 @pytest.mark.parametrize(
