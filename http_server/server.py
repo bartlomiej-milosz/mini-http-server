@@ -63,8 +63,10 @@ class HTTPServer(TCPServer):
     def __init__(self, host: str = "127.0.0.1", port: int = 8080) -> None:
         super().__init__(host, port)
         self.routes: dict[tuple[str, str], Callable[[HTTPRequest], HTTPResponse]] = {}
-    
-    def add_route(self, method: str, path: str, handler: Callable[[HTTPRequest], HTTPResponse]):
+
+    def add_route(
+        self, method: str, path: str, handler: Callable[[HTTPRequest], HTTPResponse]
+    ):
         self.routes[(method, path)] = handler
 
     @override
@@ -78,19 +80,41 @@ class HTTPServer(TCPServer):
                 break
         return data
 
+    def _send_response(
+        self, client_socket: socket.socket, response: HTTPResponse
+    ) -> None:
+        encoded_response: bytes = build_response(response)
+        client_socket.sendall(encoded_response)
+
+    def _dispatch_request(self, request: HTTPRequest) -> HTTPResponse:
+        route_key: tuple[str, str] = (request.method, request.path)
+        if route_key not in self.routes:
+            return HTTPResponse(404, "Not Found", "404 Page Not Found")
+
+        handler: Callable[[HTTPRequest], HTTPResponse] = self.routes[route_key]
+        try:
+            return handler(request)
+        except Exception as e:
+            logger.error("Handler error on %s: %s", request.path, e)
+            return HTTPResponse(
+                500, "Internal Server Error", "500 Internal Server Error"
+            )
+
     @override
     def _process_request(
         self, client_socket: socket.socket, address: tuple[str, int]
     ) -> None:
         data: bytes = self._receive(client_socket)
-        request: HTTPRequest = parse_request(data)
-        logger.info("Received %s %s from %s:%s", request.method, request.path, *address)
 
-        route_key: tuple[str, str] = (request.method, request.path)
-        if route_key in self.routes:
-            handler: Callable[[HTTPRequest], HTTPResponse] = self.routes[route_key]
-            response: HTTPResponse = handler(request)
-        else:
-            response: HTTPResponse = HTTPResponse(404, "Not Found", "404 Page Not Found")    
-        encoded_response: bytes = build_response(response)
-        client_socket.sendall(encoded_response)
+        try:
+            request: HTTPRequest = parse_request(data)
+        except Exception as e:
+            logger.error("Failed to parse request: %s", e)
+            self._send_response(
+                client_socket, HTTPResponse(400, "Bad Request", "400 Bad Request")
+            )
+            return
+
+        logger.info("Received %s %s from %s:%s", request.method, request.path, *address)
+        response: HTTPResponse = self._dispatch_request(request)
+        self._send_response(client_socket, response)
