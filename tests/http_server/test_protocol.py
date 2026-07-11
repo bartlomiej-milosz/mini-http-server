@@ -55,7 +55,7 @@ def test_parse_request_returns_valid_request_object(
                 body='{"user": "kate"}',
                 headers={"Content-Type": "application/json"},
             ),
-            b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 18\r\n\r\n{"user": "kate"}',
+            b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 16\r\n\r\n{"user": "kate"}',
         ),
     ],
 )
