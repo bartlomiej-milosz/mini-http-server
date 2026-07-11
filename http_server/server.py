@@ -1,5 +1,6 @@
 import logging
 import socket
+import threading
 from abc import ABC, abstractmethod
 from logging import Logger
 from typing import Final, override
@@ -49,7 +50,9 @@ class TCPServer(ABC):
             while True:
                 client_socket, address = self.server_socket.accept()
                 logger.info("New connection from %s:%s", *address)
-                self._handle_client(client_socket, address)
+                threading.Thread(
+                    target=self._handle_client, args=(client_socket, address)
+                ).start()
         except KeyboardInterrupt:
             logger.info("Server shutting down...")
         finally:
