@@ -28,19 +28,24 @@ class ProxyServer(TCPServer):
         destination.sendall(chunk)
         return True
 
+    def _get_target_address(self) -> tuple[str, int]:
+        """Returns the target backend address. Extracted to allow overriding by Load Balancer."""
+        return (self.target_host, self.target_port)
+
     @override
     def _process_request(
         self, client_socket: socket.socket, address: tuple[str, int]
     ) -> None:
         """Handles bidirectional data streaming between the client and target server using multiplexing (select)."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as target_socket:
+            target_address = self._get_target_address()
             try:
-                target_socket.connect((self.target_host, self.target_port))
+                target_socket.connect(target_address)
             except ConnectionRefusedError:
                 logger.error(
                     "Backend server %s:%s is down! Connection refused.",
-                    self.target_host,
-                    self.target_port,
+                    target_address[0],
+                    target_address[1],
                 )
                 return
 

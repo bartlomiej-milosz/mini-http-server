@@ -1,9 +1,7 @@
 import socket
-from unittest.mock import MagicMock
-
 import pytest
+from unittest.mock import MagicMock
 from pytest_mock import MockerFixture
-
 from app.http.models import HTTPRequest, HTTPResponse
 from app.http.server import HTTPServer
 

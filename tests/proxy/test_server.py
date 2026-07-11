@@ -1,8 +1,7 @@
 import socket
-from unittest.mock import MagicMock
 import pytest
+from unittest.mock import MagicMock
 from pytest_mock import MockerFixture
-
 from app.proxy.server import ProxyServer
 
 

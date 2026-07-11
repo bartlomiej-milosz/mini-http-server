@@ -1,10 +1,8 @@
 import socket
+import pytest
 from typing import override
 from unittest.mock import MagicMock
-
-import pytest
 from pytest_mock import MockerFixture
-
 from app.tcp.server import TCPServer
 
 
