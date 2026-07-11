@@ -1,4 +1,5 @@
 import logging
+import os
 from app.proxy.server import ProxyServer
 
 logging.basicConfig(
@@ -7,6 +8,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    logger.info("Starting Proxy Server on port 8000 (forwarding to Load Balancer on 8001)...")
-    proxy = ProxyServer(port=8000, target_port=8001)
+    target_host = os.environ.get("TARGET_HOST", "127.0.0.1")
+    target_port = int(os.environ.get("TARGET_PORT", "8001"))
+
+    logger.info("Starting Proxy Server on port 8000 (forwarding to %s:%s)...", target_host, target_port)
+    proxy = ProxyServer(host="0.0.0.0", port=8000, target_host=target_host, target_port=target_port)
     proxy.start()

@@ -12,13 +12,18 @@ logging.basicConfig(
 def get_api_status(port: int):
     def api_status(request: HTTPRequest) -> HTTPResponse:
         """Health check endpoint returning the status and version of the API."""
-        data = {"status": "ok", "version": "1.0", "message": f"Backend API is running on port {port}"}
+        data = {
+            "status": "ok",
+            "version": "1.0",
+            "message": f"Backend API is running on port {port}",
+        }
         return HTTPResponse(
             status_code=200,
             status_text="OK",
             body=json.dumps(data),
             headers={"Content-Type": "application/json"},
         )
+
     return api_status
 
 
@@ -45,7 +50,7 @@ def api_echo(request: HTTPRequest) -> HTTPResponse:
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    server = HTTPServer(port=port)
+    server = HTTPServer(host="0.0.0.0", port=port)
     server.add_route("GET", "/api/status", get_api_status(port))
     server.add_route("GET", "/api/users", api_users)
     server.add_route("POST", "/api/echo", api_echo)

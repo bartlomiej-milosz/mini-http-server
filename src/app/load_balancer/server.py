@@ -8,12 +8,18 @@ logger = logging.getLogger(__name__)
 
 class LoadBalancerServer(ProxyServer):
     def __init__(
-        self, host: str = "127.0.0.1", port: int = 8001, backend_servers: list[tuple[str, int]] | None = None
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8001,
+        backend_servers: list[tuple[str, int]] | None = None,
     ) -> None:
         """Initializes the Load Balancer Server and configures the backend server pool."""
-        # Call ProxyServer init with dummy target_host/port, as we will override _get_target_address
         super().__init__(host, port, target_host="", target_port=0)
-        self.backend_servers = backend_servers if backend_servers is not None else [("127.0.0.1", 8081), ("127.0.0.1", 8082)]
+        self.backend_servers = (
+            backend_servers
+            if backend_servers is not None
+            else [("127.0.0.1", 8081), ("127.0.0.1", 8082)]
+        )
         self.current_backend_index = 0
         self._lock = threading.Lock()
 
@@ -27,7 +33,9 @@ class LoadBalancerServer(ProxyServer):
             # Pick the current backend
             backend = self.backend_servers[self.current_backend_index]
             # Increment and wrap around
-            self.current_backend_index = (self.current_backend_index + 1) % len(self.backend_servers)
-            
+            self.current_backend_index = (self.current_backend_index + 1) % len(
+                self.backend_servers
+            )
+
         logger.info("Routing request to backend: %s:%s", *backend)
         return backend
