@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
+from http_server.models import HTTPRequest, HTTPResponse
 from http_server.server import HTTPServer, TCPServer
 
 
@@ -202,3 +203,44 @@ class TestHTTPServer:
         expected_bytes: bytes = b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
         assert result == expected_bytes
         assert mock_client_socket.recv.call_count == 3
+
+    def test_add_route_adds_handler_to_routes_dict(self, get_http_server: HTTPServer):
+        def dummy_handler(request: HTTPRequest) -> HTTPResponse: ...
+
+        get_http_server.add_route("GET", "/", dummy_handler)
+
+        assert ("GET", "/") in get_http_server.routes
+        assert get_http_server.routes[("GET", "/")] == dummy_handler
+
+    def test_process_request_calls_handler_when_route_exists(
+        self,
+        get_http_server: HTTPServer,
+        mock_client_socket: MagicMock,
+        mocker: MockerFixture,
+    ):
+        mocker.patch.object(
+            get_http_server, "_receive", return_value=b"GET / HTTP/1.1\r\n\r\n"
+        )
+        mock_handler = MagicMock()
+        mock_handler.return_value = HTTPResponse(200, "OK", "Test body")
+
+        get_http_server.add_route("GET", "/", mock_handler)
+        get_http_server._process_request(mock_client_socket, ("127.0.0.1", 54321))
+
+        mock_handler.assert_called_once()
+        expected_response = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nTest body"
+        mock_client_socket.sendall.assert_called_once_with(expected_response)
+
+    def test_process_request_returns_404_when_route_missing(
+        self,
+        get_http_server: HTTPServer,
+        mock_client_socket: MagicMock,
+        mocker: MockerFixture,
+    ):
+        mocker.patch.object(
+            get_http_server, "_receive", return_value=b"GET /unknown HTTP/1.1\r\n\r\n"
+        )
+        get_http_server._process_request(mock_client_socket, ("127.0.0.1", 54321))
+
+        expected_response = b"HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n404 Page Not Found"
+        mock_client_socket.sendall.assert_called_once_with(expected_response)

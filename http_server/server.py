@@ -3,7 +3,7 @@ import socket
 import threading
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Final, override
+from typing import Callable, Final, override
 
 from http_server.models import HTTPRequest, HTTPResponse
 from http_server.protocol import build_response, parse_request
@@ -60,6 +60,13 @@ class TCPServer(ABC):
 
 
 class HTTPServer(TCPServer):
+    def __init__(self, host: str = "127.0.0.1", port: int = 8080) -> None:
+        super().__init__(host, port)
+        self.routes: dict[tuple[str, str], Callable[[HTTPRequest], HTTPResponse]] = {}
+    
+    def add_route(self, method: str, path: str, handler: Callable[[HTTPRequest], HTTPResponse]):
+        self.routes[(method, path)] = handler
+
     @override
     def _receive(self, client_socket: socket.socket) -> bytes:
         data: bytes = b""
@@ -78,5 +85,12 @@ class HTTPServer(TCPServer):
         data: bytes = self._receive(client_socket)
         request: HTTPRequest = parse_request(data)
         logger.info("Received %s %s from %s:%s", request.method, request.path, *address)
-        response: bytes = build_response(HTTPResponse(200, "OK", "Hello from server!"))
-        client_socket.sendall(response)
+
+        route_key: tuple[str, str] = (request.method, request.path)
+        if route_key in self.routes:
+            handler: Callable[[HTTPRequest], HTTPResponse] = self.routes[route_key]
+            response: HTTPResponse = handler(request)
+        else:
+            response: HTTPResponse = HTTPResponse(404, "Not Found", "404 Page Not Found")    
+        encoded_response: bytes = build_response(response)
+        client_socket.sendall(encoded_response)
