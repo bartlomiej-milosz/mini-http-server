@@ -19,16 +19,16 @@ class TCPServer(ABC):
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     @abstractmethod
-    def _receive(self, client_socket: socket.socket) -> bytes: ...
-
-    @abstractmethod
     def _process_request(
         self, client_socket: socket.socket, address: tuple[str, int]
-    ) -> None: ...
+    ) -> None:
+        """Abstract method to handle raw incoming data from a client socket."""
+        ...
 
     def _handle_client(
         self, client_socket: socket.socket, address: tuple[str, int]
     ) -> None:
+        """Wrapper method executed in a separate thread to manage client lifecycle and error handling."""
         try:
             self._process_request(client_socket, address)
         except ConnectionResetError:
@@ -40,6 +40,7 @@ class TCPServer(ABC):
             logger.info("Client %s:%s disconnected", *address)
 
     def start(self) -> None:
+        """Binds the socket to the port and starts listening for incoming connections in an infinite loop."""
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(self.BACKLOG)
         logger.info("The server is listening on: %s:%s", self.host, self.port)

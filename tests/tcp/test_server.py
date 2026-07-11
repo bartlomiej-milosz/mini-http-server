@@ -12,16 +12,6 @@ from app.tcp.server import TCPServer
 def get_tcp_server() -> TCPServer:
     class ConcreteTCPServer(TCPServer):
         @override
-        def _receive(self, client_socket: socket.socket) -> bytes:
-            data: bytes = b""
-            while True:
-                chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
-                if not chunk:
-                    break
-                data += chunk
-            return data
-
-        @override
         def _process_request(
             self, client_socket: socket.socket, address: tuple[str, int]
         ) -> None: ...
@@ -63,24 +53,6 @@ def server_address() -> tuple[str, int]:
 
 
 class TestTCPServer:
-    @pytest.mark.parametrize(
-        "chunks",
-        [
-            [b"Hello", b""],
-            [b"Hel", b"lo", b""],
-            [b"H", b"e", b"l", b"l", b"o", b""],
-        ],
-    )
-    def test_receive_returns_data(
-        self,
-        get_tcp_server: TCPServer,
-        chunks: list[bytes],
-        mock_client_socket: MagicMock,
-    ):
-        mock_client_socket.recv.side_effect = chunks
-        result: bytes = get_tcp_server._receive(mock_client_socket)
-        assert result == b"Hello"
-
     def test_handle_client_closes_socket(
         self,
         get_tcp_server: TCPServer,

@@ -17,9 +17,11 @@ class HTTPServer(TCPServer):
     def add_route(
         self, method: str, path: str, handler: Callable[[HTTPRequest], HTTPResponse]
     ):
+        """Registers a handler function for a specific HTTP method and path."""
         self.routes[(method, path)] = handler
 
     def _read_until_headers_complete(self, client_socket: socket.socket) -> bytes:
+        """Reads from the client socket until the HTTP header separator (\\r\\n\\r\\n) is found."""
         data: bytes = b""
         while b"\r\n\r\n" not in data:
             chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
@@ -29,6 +31,7 @@ class HTTPServer(TCPServer):
         return data
 
     def _extract_content_length(self, headers_raw: bytes) -> int:
+        """Parses HTTP headers to extract the Content-Length value, defaulting to 0 if not found."""
         headers_text: str = headers_raw.decode("utf-8", errors="ignore")
         for line in headers_text.split("\r\n")[1:]:
             if ":" in line:
@@ -43,6 +46,7 @@ class HTTPServer(TCPServer):
     def _read_body_by_content_length(
         self, client_socket: socket.socket, body_raw: bytes, content_length: int
     ) -> bytes:
+        """Reads the remaining body bytes from the socket based on the extracted Content-Length."""
         while len(body_raw) < content_length:
             chunk: bytes = client_socket.recv(self.BUFFER_SIZE)
             if not chunk:
@@ -50,8 +54,8 @@ class HTTPServer(TCPServer):
             body_raw += chunk
         return body_raw
 
-    @override
     def _receive(self, client_socket: socket.socket) -> bytes:
+        """Reads the complete HTTP request (headers and body) from the client socket."""
         data: bytes = self._read_until_headers_complete(client_socket)
 
         if b"\r\n\r\n" not in data:
@@ -69,10 +73,12 @@ class HTTPServer(TCPServer):
     def _send_response(
         self, client_socket: socket.socket, response: HTTPResponse
     ) -> None:
+        """Encodes and sends an HTTPResponse object back to the client."""
         encoded_response: bytes = build_response(response)
         client_socket.sendall(encoded_response)
 
     def _dispatch_request(self, request: HTTPRequest) -> HTTPResponse:
+        """Routes the parsed HTTPRequest to the appropriate handler and returns an HTTPResponse."""
         route_key: tuple[str, str] = (request.method, request.path)
         if route_key not in self.routes:
             return HTTPResponse(404, "Not Found", "404 Page Not Found")
@@ -90,6 +96,7 @@ class HTTPServer(TCPServer):
     def _process_request(
         self, client_socket: socket.socket, address: tuple[str, int]
     ) -> None:
+        """Main entrypoint for processing an incoming client connection. Receives, parses, dispatches, and responds."""
         data: bytes = self._receive(client_socket)
 
         try:

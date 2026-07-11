@@ -2,6 +2,7 @@ from app.http.models import HTTPRequest, HTTPResponse
 
 
 def parse_request(data: bytes) -> HTTPRequest:
+    """Parses raw HTTP request bytes into an HTTPRequest object."""
     parts = data.split(b"\r\n\r\n", 1)
     header_data = parts[0]
     body_data = parts[1] if len(parts) > 1 else b""
@@ -19,6 +20,7 @@ def parse_request(data: bytes) -> HTTPRequest:
 
 
 def build_response(response: HTTPResponse) -> bytes:
+    """Serializes an HTTPResponse object into raw bytes ready for transmission."""
     status_line: str = (
         f"{response.version} {response.status_code} {response.status_text}\r\n"
     )
