@@ -1,93 +1,94 @@
-# raw-network-stack
+# Raw Network Stack
 
-A complete networking stack built from scratch in Python using raw sockets — no frameworks, no standard library networking modules.
+A fully functional, low-level network stack built entirely in raw Python from scratch. This project demonstrates how modern web infrastructure (HTTP servers, Reverse Proxies, and Load Balancers) operates under the hood by manipulating raw TCP sockets and byte streams.
 
-This project is an educational and architectural showcase demonstrating how to build a highly symmetric, decoupled system capable of handling HTTP traffic, proxying requests, and load balancing across multiple server instances.
+**Zero external dependencies for the core logic.**
 
 ## Architecture
 
-The project is structured into logical, decoupled layers within the `src/app` package (following the standard Python `src/` layout). It heavily utilizes Object-Oriented Programming and abstraction to maintain a clean architecture.
+This project is built in layers, with each component extending the capabilities of the previous one:
 
-```text
-raw-network-stack/
-├── src/
-│   └── app/
-│       ├── main.py            # Entry point for the application
-│       ├── tcp/               # Base Networking Layer
-│       │   └── server.py      # Abstract TCPServer (bind, listen, accept)
-│       ├── http/              # HTTP Protocol Layer
-│       │   ├── server.py      # Concrete HTTPServer and Routing
-│       │   ├── models.py      # HTTPRequest and HTTPResponse dataclasses
-│       │   └── protocol.py    # HTTP parsing and payload building logic
-│       ├── proxy/             # Gateway Layer
-│       │   └── server.py      # Reverse Proxy implementation
-│       └── load_balancer/     # Traffic Management Layer
-│           └── server.py      # Load Balancer stub (future implementation)
-└── tests/                     # Comprehensive Pytest Suite
+1. **`TCPServer`**: The foundation. Handles raw socket binding, listening, and accepting client connections.
+2. **`HTTPServer`**: Parses raw bytes into HTTP requests (`HTTPRequest`) and serializes HTTP responses (`HTTPResponse`). Features a basic routing engine.
+3. **`ProxyServer`**: A Reverse Proxy that sits in front of the HTTP Server. Uses `select.select()` for non-blocking I/O multiplexing to stream data between the client and the backend server.
+4. **`LoadBalancerServer`**: Inherits from the Proxy and implements a thread-safe **Round Robin** algorithm to distribute incoming traffic across a pool of backend HTTP servers.
+
+### The Pipeline
+
+```mermaid
+graph LR
+    Client((Client)) -->|Port 8000| Proxy[Proxy Server]
+    Proxy -->|Port 8001| LB[Load Balancer]
+    LB -->|Round Robin| H1[HTTP Server 1 :8081]
+    LB -->|Round Robin| H2[HTTP Server 2 :8082]
+    LB -->|Round Robin| H3[HTTP Server 3 :8083]
 ```
 
-### Components
+## Features
 
-1. **`TCPServer`**: The foundation of the stack. An abstract base class managing socket lifecycles, threading, and safe client connection handling.
-2. **`HTTPServer`**: Inherits from `TCPServer`. Handles HTTP/1.1 parsing, header reading, payload extraction (via `Content-Length`), and dispatches requests to defined routes.
-3. **`ProxyServer`**: Inherits from `TCPServer`. Designed to act as an intermediary, forwarding raw socket data between clients and backend servers.
-4. **`LoadBalancerServer`**: Inherits from `TCPServer`. Designed to distribute incoming TCP traffic across multiple backend `HTTPServer` instances using algorithms like Round Robin.
+- **Raw TCP Sockets**: Built using Python's built-in `socket` library.
+- **Multiplexing**: Uses `select` for efficient, non-blocking I/O proxying.
+- **Thread-Safety**: Uses `threading.Lock()` to secure the Round Robin algorithm against race conditions.
+- **Clean Architecture**: Follows DRY principles, OOP inheritance, and the `src-layout` pattern.
+- **Dockerized**: Fully orchestrated with Docker Compose for a one-click deployment of the entire 5-container topology.
 
-## Requirements
+## Running with Docker (Recommended)
 
-- Python 3.13+
-- [uv](https://github.com/astral-sh/uv) (Extremely fast Python package installer and resolver)
+The easiest way to spin up the entire distributed architecture is via Docker Compose.
 
-## Setup
-
-Initialize the virtual environment and install dependencies:
-
-```sh
-uv sync
+```bash
+docker compose up --build
 ```
 
-## Running the Server
+This will start:
 
-Start the HTTP server on `127.0.0.1:8080`:
+- 3 separate HTTP backend servers (hidden in the Docker network)
+- 1 Load Balancer routing to the backends
+- 1 Proxy Server exposing port `8000` to your host machine
 
-```sh
-uv run python -m app.main
+To test the load balancer, run this in a new terminal or your browser:
+
+```bash
+curl http://localhost:8000/api/status
 ```
 
-Test it by sending a curl request:
+_(Run it multiple times to see the Load Balancer cycle through different backend server ports!)_
 
-```sh
-curl http://localhost:8080
-```
+## Running Locally (Manual Setup)
 
-## Testing and QA
+If you want to run the scripts individually on your host machine to observe the logs in separate terminals, use the `PYTHONPATH` variable:
 
-The project maintains rigorous code quality and high test coverage.
+1. **Start HTTP Servers**:
+   ```bash
+   PYTHONPATH=src uv run python src/app/run_http_server.py 8081
+   PYTHONPATH=src uv run python src/app/run_http_server.py 8082
+   PYTHONPATH=src uv run python src/app/run_http_server.py 8083
+   ```
+2. **Start Load Balancer**:
+   ```bash
+   PYTHONPATH=src uv run python src/app/run_load_balancer.py
+   ```
+3. **Start Proxy Server**:
+   ```bash
+   PYTHONPATH=src uv run python src/app/run_proxy_server.py
+   ```
 
-**Run unit tests:**
+## Available API Endpoints
 
-```sh
+The HTTP Server comes with the following mock endpoints:
+
+- `GET /api/status` - Health check (returns the port of the backend that handled the request).
+- `GET /api/users` - Returns a JSON list of mock users.
+- `POST /api/echo` - Echoes back exactly whatever body payload you send it.
+
+## Running Tests
+
+The project includes a robust suite of unit tests written with `pytest`, including complex concurrency tests for thread safety and connection refusal handling.
+
+```bash
 uv run pytest
 ```
 
-**Run tests with coverage:**
+---
 
-```sh
-uv run pytest --cov=app
-```
-
-**Linting and Type Checking:**
-
-```sh
-uv run ruff check
-uv run ty check
-```
-
-## CI / CD
-
-The project is integrated with GitHub Actions. Every push automatically triggers a pipeline that:
-
-1. Installs the environment using `uv`.
-2. Runs the `ruff` linter.
-3. Validates static types using `ty`.
-4. Executes the full `pytest` suite.
+_Built as a deep-dive educational project into network engineering and socket programming._
